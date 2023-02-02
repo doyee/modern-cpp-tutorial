@@ -28,8 +28,8 @@ public:
     ThreadPool(size_t threadNum);
 
     // enqueue new thread task
-    template<typename TASK, typename... Args>
-    auto enqueue(TASK&& t, Args&&... args);
+    template<typename F, typename... Args>
+    auto enqueue(F&& t, Args&&... args);
 
     // destory thread pool and all created threads
     ~ThreadPool();
@@ -93,16 +93,16 @@ inline ThreadPool::ThreadPool(size_t threadNum) {
 
 // enqueue new thread
 
-template<typename TASK, typename... Args>
-auto ThreadPool::enqueue(TASK&& t, Args&&... args) {
+template<typename F, typename... Args>
+auto ThreadPool::enqueue(F&& f, Args&&... args) {
     // deduce reture type
-    using return_type = typename std::result_of<TASK(Args...)>::type;
+    using return_type = typename std::result_of<F(Args...)>::type;
 
     // fetch task
     using PackagedTask = std::packaged_task<return_type()>;
 
     auto task = std::make_shared<PackagedTask>( 
-                std::bind(std::forward<TASK>(t),std::forward<Args>(args)... )
+                std::bind(std::forward<F>(f),std::forward<Args>(args)... )
             );
 
     auto res = task->get_future();
